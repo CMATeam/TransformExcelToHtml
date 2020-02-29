@@ -1,13 +1,6 @@
 ﻿using Microsoft.Office.Interop.Excel;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -35,31 +28,27 @@ namespace TransformExcelToHtml
             // Make the object visible.
             excelApp.Visible = true;
             Workbook wb = excelApp.Workbooks.Open(excelFilePath);
+            PublishObjects publish = wb.PublishObjects;
+            object misValue = System.Reflection.Missing.Value;
 
-            // Loop ws throught wb
-            IEnumerator wsEnumerator = excelApp.ActiveWorkbook.Worksheets.GetEnumerator();
-            object missing = Type.Missing;
-            object format = Microsoft.Office.Interop.Excel.XlFileFormat.xlHtml;
-            //while (wsEnumerator.MoveNext())
-            //{
-                Workbook wsCurrent = wb;
-                String outputFile = excelFilePath + ".html";
-                //wsCurrent.SaveAs(outputFile, format, missing, missing, missing,
-                //    missing, XlSaveAsAccessMode.xlNoChange, missing, missing, missing, missing, missing);
-                PublishObjects publish = wsCurrent.PublishObjects;
-                System.Diagnostics.Debug.WriteLine("outputFile: " + outputFile);
-                System.Diagnostics.Debug.WriteLine("XlSourceType.xlSourcePrintArea: " + XlSourceType.xlSourcePrintArea);
+            // Loop through excel worksheets
+            foreach (Worksheet worksheet in wb.Worksheets)
+            {
+                // TODO config folder to export html file
+                System.Diagnostics.Debug.WriteLine(Path.GetDirectoryName(excelFilePath));
+                String outputFile = Path.GetDirectoryName(excelFilePath) + "/" + worksheet.Name + ".html";
+                System.Diagnostics.Debug.WriteLine(outputFile);
                 publish.Add(
                     XlSourceType.xlSourcePrintArea,
                     outputFile,
-                    "default",
+                    worksheet.Name,
                     XlSourceType.xlSourcePrintArea,
                     XlHtmlType.xlHtmlStatic,
-                    "",
-                    ""
+                    worksheet.Name // id of div tag
                 ).Publish(true);
-            //}
-            //excelApp.Quit();
+            }
+            wb.Close(false, misValue, misValue);
+            excelApp.Quit();
             MessageBox.Show("Done", "TETH", MessageBoxButtons.OK);
         }
     }
